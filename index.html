@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; }
+    h1 { text-align: center; color: #2c3e50; padding: 15px 0 15px; }
+
+    /* Budget Bar */
+    .budget-bar {
+      max-width: 1400px; margin: 0 auto 15px; padding: 0 15px;
+      display: flex; align-items: center; gap: 15px; flex-wrap: wrap;
+    }
+    .budget-bar label { font-weight: bold; color: #2c3e50; }
+    .budget-bar input {
+      padding: 8px 12px; border: 2px solid #3498db; border-radius: 5px;
+      font-size: 14px; width: 150px;
+    }
+    .budget-info { font-size: 14px; color: #333; }
+    .budget-info.over { color: #e74c3c; font-weight: bold; }
+    .budget-info.under { color: #27ae60; }
+
+    /* Stats */
+    .stats-strip {
+      max-width: 1400px; margin: 0 auto 15px; padding: 0 15px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: white; border: 1px solid #ddd; border-radius: 6px;
+      padding: 10px 20px; text-align: center;
+    }
+    .stat-card .sval { font-size: 20px; font-weight: bold; color: #3498db; }
+    .stat-card .slbl { font-size: 11px; color: #999; }
+
+    /* Main Container */
+    .container {
+      display: flex; gap: 15px; max-width: 1400px;
+      margin: 0 auto; padding: 0 15px 20px; align-items: flex-start;
+    }
+    .left { flex: 1; }
+    .right { width: 350px; flex-shrink: 0; }
+
+    /* Box */
+    .box {
+      background: white; border: 1px solid #ddd;
+      border-radius: 8px; padding: 15px; margin-bottom: 15px;
+    }
+    .box h2 {
+      font-size: 16px; color: #333; margin-bottom: 12px;
+      border-bottom: 2px solid #3498db; padding-bottom: 6px;
+    }
+
+    /* Category Tabs */
+    .cat-tabs { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+    .cat-btn {
+      padding: 6px 14px; font-size: 12px; border: 1px solid #ddd;
+      border-radius: 20px; background: white; cursor: pointer; color: #555;
+    }
+    .cat-btn:hover { border-color: #3498db; }
+    .cat-btn.active { background: #3498db; color: white; border-color: #3498db; }
+
+    /* Products Grid */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .product-card {
+      border: 1px solid #e0e0e0; border-radius: 6px;
+      overflow: hidden; cursor: pointer; background: #fafafa;
+      transition: transform 0.2s;
+    }
+    .product-card:hover { transform: scale(1.02); border-color: #3498db; }
+    .product-card img { width: 100%; height: 90px; object-fit: cover; }
+    .product-card .pinfo { padding: 8px; }
+    .product-card .pname { font-size: 12px; font-weight: bold; color: #333; }
+    .product-card .pprice { font-size: 11px; color: #27ae60; margin-top: 3px; }
+    .product-card button {
+      width: 100%; background: #3498db; color: white;
+      border: none; padding: 6px; font-size: 11px; cursor: pointer;
+    }
+    .product-card button:hover { background: #2980b9; }
+
+    /* Cart Items */
+    .cart-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+    }
+    .cart-item img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+    .cart-item .iname { flex: 1; }
+    .cart-item .iname strong { display: block; font-size: 13px; }
+    .cart-item .iname span { color: #888; font-size: 11px; }
+    .cart-item .iqty { display: flex; align-items: center; gap: 5px; }
+    .qbtn {
+      width: 24px; height: 24px; border: 1px solid #ccc;
+      border-radius: 4px; background: #f5f5f5; cursor: pointer; font-size: 14px;
+    }
+    .qbtn:hover { background: #e0e0e0; }
+    .cart-item .rm-btn {
+      background: #e74c3c; color: white; border: none;
+      border-radius: 4px; width: 24px; height: 24px; cursor: pointer;
+    }
+    .empty-msg { text-align: center; color: #aaa; padding: 30px 0; }
+
+    /* Totals */
+    .total-area { margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px; }
+    .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+    .total-row.final {
+      font-weight: bold; font-size: 16px; color: #2c3e50;
+      border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;
+    }
+    .discount-note {
+      background: #eafaf1; border: 1px solid #a9dfbf; border-radius: 4px;
+      color: #1e8449; font-size: 12px; padding: 6px 10px; margin-bottom: 8px;
+    }
+    .btn {
+      width: 100%; padding: 10px; border: none; border-radius: 5px;
+      font-size: 14px; cursor: pointer; margin-top: 8px;
+    }
+    .btn-green { background: #27ae60; color: white; }
+    .btn-red { background: #e74c3c; color: white; }
+    .btn:hover { opacity: 0.9; }
+
+    /* Suggestions */
+    .suggest-box {
+      background: #fffbea; border: 1px dashed #f0c040;
+      border-radius: 8px; padding: 12px; margin-top: 12px;
+    }
+    .suggest-box h3 { font-size: 13px; color: #b8860b; margin-bottom: 10px; }
+    .suggest-list { display: flex; gap: 8px; flex-wrap: wrap; }
+    .suggest-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: white; border: 1px solid #ddd; border-radius: 20px;
+      padding: 4px 10px 4px 4px; font-size: 12px; cursor: pointer;
+    }
+    .suggest-chip:hover { border-color: #3498db; }
+    .suggest-chip img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+    .suggest-chip .chip-add {
+      background: #3498db; color: white; border: none; border-radius: 10px;
+      padding: 2px 8px; font-size: 11px; cursor: pointer; margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🛒 Shopping Cart</h1>
+
+<!-- Budget Section -->
+<div class="budget-bar">
+  <label>💰 Set Budget:</label>
+  <input type="number" id="budget-input" placeholder="Enter budget" min="0" oninput="checkBudget()">
+  <span class="budget-info" id="budget-status"></span>
+</div>
+
+<!-- Stats -->
+<div class="stats-strip">
+  <div class="stat-card"><div class="sval" id="stat-items">0</div><div class="slbl">Items</div></div>
+  <div class="stat-card"><div class="sval" id="stat-subtotal">Rs.0</div><div class="slbl">Subtotal</div></div>
+  <div class="stat-card"><div class="sval" id="stat-saved">Rs.0</div><div class="slbl">Saved</div></div>
+</div>
+
+<div class="container">
+  <!-- LEFT: Products -->
+  <div class="left">
+    <div class="box">
+      <h2>🏪 Products</h2>
+      <div class="cat-tabs" id="category-tabs"></div>
+      <div class="products" id="products-grid"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Cart -->
+  <div class="right">
+    <div class="box">
+      <h2>🧾 Your Cart</h2>
+      <div id="empty-msg" class="empty-msg">Cart is empty 😶</div>
+      <div id="cart-list"></div>
+      <div id="total-section" style="display:none;">
+        <div class="discount-note" id="disc-note" style="display:none;">🎉 10% discount applied!</div>
+        <div class="total-area">
+          <div class="total-row"><span>Subtotal</span><span id="t-sub">Rs.0</span></div>
+          <div class="total-row" id="disc-row" style="display:none;color:#27ae60;">
+            <span>Discount (10%)</span><span id="t-disc">-Rs.0</span>
+          </div>
+          <div class="total-row final"><span>Total</span><span id="t-final">Rs.0</span></div>
+        </div>
+        <button class="btn btn-green" onclick="checkout()">💳 Checkout</button>
+        <button class="btn btn-red" onclick="clearCart()">🗑 Clear Cart</button>
+      </div>
+      <div class="suggest-box" id="suggest-box" style="display:none;">
+        <h3>💡 You might also like:</h3>
+        <div class="suggest-list" id="suggest-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// DATA - Product Catalog with Categories
+// ============================================
+let catalog = [
+  // Fruits
+  { name: "Apple",      price: 50,    category: "Fruits",        img: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=200&auto=format&fit=crop" },
+  { name: "Banana",     price: 30,    category: "Fruits",        img: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&auto=format&fit=crop" },
+  { name: "Orange",     price: 45,    category: "Fruits",        img: "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&auto=format&fit=crop" },
+  { name: "Mango",      price: 80,    category: "Fruits",        img: "https://images.unsplash.com/photo-1553279768-865429fa0078?w=200&auto=format&fit=crop" },
+  { name: "Grapes",     price: 60,    category: "Fruits",        img: "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=200&auto=format&fit=crop" },
+  { name: "Watermelon", price: 70,    category: "Fruits",        img: "https://images.unsplash.com/photo-1589984662646-e7b2e4962f18?w=200&auto=format&fit=crop" },
+
+  // Food & Drinks
+  { name: "Maggie",     price: 15,    category: "Food",          img: "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200&auto=format&fit=crop" },
+  { name: "Coke",       price: 40,    category: "Food",          img: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=200&auto=format&fit=crop" },
+  { name: "Milk",       price: 25,    category: "Food",          img: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&auto=format&fit=crop" },
+  { name: "Cheese",     price: 90,    category: "Food",          img: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=200&auto=format&fit=crop" },
+  { name: "Bread",      price: 35,    category: "Food",          img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop" },
+  { name: "Candies",    price: 20,    category: "Food",          img: "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?w=200&auto=format&fit=crop" },
+
+  // Personal Care
+  { name: "Shampoo",      price: 150, category: "Personal Care", img: "https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=200&auto=format&fit=crop" },
+  { name: "Moisturizer",  price: 200, category: "Personal Care", img: "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=200&auto=format&fit=crop" },
+  { name: "Soap",         price: 40,  category: "Personal Care", img: "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=200&auto=format&fit=crop" },
+
+  // Clothes
+  { name: "T-Shirt", price: 350,  category: "Clothes",    img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&auto=format&fit=crop" },
+  { name: "Jeans",   price: 800,  category: "Clothes",    img: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&auto=format&fit=crop" },
+  { name: "Jacket",  price: 1200, category: "Clothes",    img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200&auto=format&fit=crop" },
+
+  // Footwear
+  { name: "Shoes",    price: 1500, category: "Footwear",     img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&auto=format&fit=crop" },
+  { name: "Slippers", price: 250,  category: "Footwear",     img: "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=200&auto=format&fit=crop" },
+
+  // Electronics
+  { name: "Laptop",     price: 45000, category: "Electronics", img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200&auto=format&fit=crop" },
+  { name: "Mouse",      price: 500,   category: "Electronics", img: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=200&auto=format&fit=crop" },
+  { name: "Headphones", price: 800,   category: "Electronics", img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop" },
+
+  // Accessories
+  { name: "Tiffin Box",   price: 300, category: "Accessories", img: "https://images.unsplash.com/photo-1594997756045-f669a9631419?w=200&auto=format&fit=crop" },
+  { name: "Water Bottle", price: 150, category: "Accessories", img: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=200&auto=format&fit=crop" },
+  { name: "Bag",          price: 600, category: "Accessories", img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&auto=format&fit=crop" }
+];
+
+// Cart Array
+let cart = [];
+
+// Current category filter
+let currentCategory = "All";
+
+// Suggestion mappings
+let suggestions = {
+  "apple":        ["Banana", "Orange", "Mango"],
+  "banana":       ["Apple", "Milk", "Grapes"],
+  "orange":       ["Apple", "Mango", "Grapes"],
+  "mango":        ["Orange", "Grapes", "Coke"],
+  "grapes":       ["Apple", "Orange", "Mango"],
+  "watermelon":   ["Orange", "Coke", "Grapes"],
+  "maggie":       ["Coke", "Candies", "Cheese"],
+  "coke":         ["Maggie", "Candies", "Bread"],
+  "milk":         ["Bread", "Cheese", "Candies"],
+  "cheese":       ["Bread", "Milk", "Maggie"],
+  "bread":        ["Cheese", "Milk", "Maggie"],
+  "candies":      ["Coke", "Bread", "Maggie"],
+  "shampoo":      ["Moisturizer", "Soap"],
+  "moisturizer":  ["Shampoo", "Soap"],
+  "soap":         ["Shampoo", "Moisturizer"],
+  "t-shirt":      ["Jeans", "Jacket", "Shoes"],
+  "jeans":        ["T-Shirt", "Shoes", "Jacket"],
+  "jacket":       ["T-Shirt", "Jeans", "Shoes"],
+  "shoes":        ["Slippers", "Jeans", "T-Shirt"],
+  "slippers":     ["Shoes", "T-Shirt"],
+  "laptop":       ["Mouse", "Headphones", "Bag"],
+  "mouse":        ["Laptop", "Headphones"],
+  "headphones":   ["Laptop", "Mouse"],
+  "tiffin box":   ["Water Bottle", "Bag"],
+  "water bottle": ["Tiffin Box", "Bag"],
+  "bag":          ["Water Bottle", "Tiffin Box", "Laptop"]
+};
+
+// ============================================
+// FUNCTIONS
+// ============================================
+
+function getCategories() {
+  let categories = ["All"];
+  for (let i = 0; i < catalog.length; i++) {
+    let cat = catalog[i].category;
+    let exists = false;
+    for (let j = 0; j < categories.length; j++) {
+      if (categories[j] === cat) { exists = true; break; }
+    }
+    if (!exists) categories.push(cat);
+  }
+  return categories;
+}
+
+function filterProducts(category) {
+  if (category === "All") return catalog;
+  let filtered = [];
+  for (let i = 0; i < catalog.length; i++) {
+    if (catalog[i].category === category) filtered.push(catalog[i]);
+  }
+  return filtered;
+}
+
+function findProduct(name) {
+  for (let i = 0; i < catalog.length; i++) {
+    if (catalog[i].name.toLowerCase() === name.toLowerCase()) return catalog[i];
+  }
+  return null;
+}
+
+function findInCart(name) {
+  for (let i = 0; i < cart.length; i++) {
+    if (cart[i].name.toLowerCase() === name.toLowerCase()) return i;
+  }
+  return -1;
+}
+
+function addItem(name, price, quantity) {
+  let index = findInCart(name);
+  if (index !== -1) {
+    cart[index].quantity = cart[index].quantity + quantity;
+  } else {
+    let product = findProduct(name);
+    let img = product ? product.img : "";
+    cart.push({ name: name, price: price, quantity: quantity, img: img });
+  }
+  renderCart();
+  showSuggestions(name);
+  checkBudget();
+}
+
+function removeItem(name) {
+  let index = findInCart(name);
+  if (index !== -1) { cart.splice(index, 1); renderCart(); checkBudget(); }
+}
+
+function updateQty(name, newQty) {
+  if (newQty <= 0) { removeItem(name); return; }
+  let index = findInCart(name);
+  if (index !== -1) { cart[index].quantity = newQty; renderCart(); checkBudget(); }
+}
+
+function getTotal() {
+  let subtotal = 0, totalItems = 0;
+  for (let i = 0; i < cart.length; i++) {
+    subtotal += cart[i].price * cart[i].quantity;
+    totalItems += cart[i].quantity;
+  }
+  let discount = subtotal > 100 ? subtotal * 0.10 : 0;
+  return { subtotal: subtotal, discount: discount, finalTotal: subtotal - discount, totalItems: totalItems };
+}
+
+function clearCart() {
+  cart = [];
+  renderCart();
+  document.getElementById("suggest-box").style.display = "none";
+  checkBudget();
+}
+
+function checkout() {
+  if (cart.length === 0) { alert("Cart is empty!"); return; }
+  let totals = getTotal();
+  let message = "ORDER SUMMARY\n\n";
+  for (let i = 0; i < cart.length; i++) {
+    let item = cart[i];
+    message += item.name + " x " + item.quantity + " = Rs." + (item.price * item.quantity) + "\n";
+  }
+  message += "\n-----------------\n";
+  message += "Subtotal: Rs." + totals.subtotal + "\n";
+  message += "Discount: -Rs." + totals.discount.toFixed(2) + "\n";
+  message += "Total: Rs." + totals.finalTotal.toFixed(2) + "\n";
+  message += "\nThank you for shopping! 😊";
+  alert(message);
+  clearCart();
+}
+
+function checkBudget() {
+  let budgetInput = document.getElementById("budget-input");
+  let budgetStatus = document.getElementById("budget-status");
+  let budget = parseFloat(budgetInput.value);
+  if (isNaN(budget) || budget <= 0) { budgetStatus.textContent = ""; budgetStatus.className = "budget-info"; return; }
+  let totals = getTotal();
+  let remaining = budget - totals.finalTotal;
+  if (remaining >= 0) {
+    budgetStatus.textContent = "✅ Within budget! Rs." + remaining.toFixed(2) + " left";
+    budgetStatus.className = "budget-info under";
+  } else {
+    budgetStatus.textContent = "⚠️ Over budget by Rs." + Math.abs(remaining).toFixed(2);
+    budgetStatus.className = "budget-info over";
+  }
+}
+
+function getSuggestions(itemName) {
+  let key = itemName.toLowerCase();
+  let result = [];
+  if (suggestions[key]) {
+    let suggestNames = suggestions[key];
+    for (let i = 0; i < suggestNames.length; i++) {
+      let sName = suggestNames[i];
+      if (findInCart(sName) === -1) {
+        let product = findProduct(sName);
+        if (product) result.push(product);
+      }
+    }
+  }
+  return result;
+}
+
+function showSuggestions(lastItem) {
+  let box = document.getElementById("suggest-box");
+  let list = document.getElementById("suggest-list");
+  let items = getSuggestions(lastItem);
+  if (items.length === 0) { box.style.display = "none"; return; }
+  let html = "";
+  for (let i = 0; i < items.length; i++) {
+    let p = items[i];
+    html += '<div class="suggest-chip">';
+    html += '<img src="' + p.img + '" alt="' + p.name + '">';
+    html += '<span>' + p.name + '</span>';
+    html += '<span style="color:#27ae60;font-size:11px">Rs.' + p.price + '</span>';
+    html += '<button class="chip-add" onclick="addItem(\'' + p.name + '\',' + p.price + ',1)">+ Add</button>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  box.style.display = "block";
+}
+
+// ============================================
+// RENDER FUNCTIONS
+// ============================================
+
+function renderCategories() {
+  let container = document.getElementById("category-tabs");
+  let categories = getCategories();
+  let html = "";
+  for (let i = 0; i < categories.length; i++) {
+    let cat = categories[i];
+    let activeClass = (cat === currentCategory) ? "active" : "";
+    html += '<button class="cat-btn ' + activeClass + '" onclick="selectCategory(\'' + cat + '\')">' + cat + '</button>';
+  }
+  container.innerHTML = html;
+}
+
+function selectCategory(category) {
+  currentCategory = category;
+  renderCategories();
+  renderProducts();
+}
+
+function renderProducts() {
+  let container = document.getElementById("products-grid");
+  let products = filterProducts(currentCategory);
+  let html = "";
+  for (let i = 0; i < products.length; i++) {
+    let p = products[i];
+    html += '<div class="product-card">';
+    html += '<img src="' + p.img + '" alt="' + p.name + '" onerror="this.src=\'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=200&auto=format&fit=crop\'">';
+    html += '<div class="pinfo">';
+    html += '<div class="pname">' + p.name + '</div>';
+    html += '<div class="pprice">Rs.' + p.price + '</div>';
+    html += '</div>';
+    html += '<button onclick="addItem(\'' + p.name + '\',' + p.price + ',1)">+ Add to Cart</button>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderCart() {
+  let listDiv = document.getElementById("cart-list");
+  let emptyMsg = document.getElementById("empty-msg");
+  let totalSection = document.getElementById("total-section");
+
+  if (cart.length === 0) {
+    listDiv.innerHTML = "";
+    emptyMsg.style.display = "block";
+    totalSection.style.display = "none";
+    updateStats(0, 0, 0);
+    document.getElementById("suggest-box").style.display = "none";
+    return;
+  }
+
+  emptyMsg.style.display = "none";
+  totalSection.style.display = "block";
+
+  let html = "";
+  for (let i = 0; i < cart.length; i++) {
+    let item = cart[i];
+    html += '<div class="cart-item">';
+    html += '<img src="' + item.img + '" alt="' + item.name + '">';
+    html += '<div class="iname"><strong>' + item.name + '</strong><span>Rs.' + item.price + ' each</span></div>';
+    html += '<div class="iqty">';
+    html += '<button class="qbtn" onclick="updateQty(\'' + item.name + '\',' + (item.quantity - 1) + ')">-</button>';
+    html += '<span>' + item.quantity + '</span>';
+    html += '<button class="qbtn" onclick="updateQty(\'' + item.name + '\',' + (item.quantity + 1) + ')">+</button>';
+    html += '</div>';
+    html += '<button class="rm-btn" onclick="removeItem(\'' + item.name + '\')">✕</button>';
+    html += '</div>';
+  }
+  listDiv.innerHTML = html;
+
+  let totals = getTotal();
+  document.getElementById("t-sub").textContent = "Rs." + totals.subtotal;
+  document.getElementById("t-final").textContent = "Rs." + totals.finalTotal.toFixed(2);
+
+  if (totals.discount > 0) {
+    document.getElementById("disc-row").style.display = "flex";
+    document.getElementById("disc-note").style.display = "block";
+    document.getElementById("t-disc").textContent = "-Rs." + totals.discount.toFixed(2);
+  } else {
+    document.getElementById("disc-row").style.display = "none";
+    document.getElementById("disc-note").style.display = "none";
+  }
+
+  updateStats(totals.totalItems, totals.subtotal, totals.discount);
+}
+
+function updateStats(items, subtotal, saved) {
+  document.getElementById("stat-items").textContent = items;
+  document.getElementById("stat-subtotal").textContent = "Rs." + subtotal;
+  document.getElementById("stat-saved").textContent = "Rs." + Math.round(saved);
+}
+
+// ============================================
+// INITIALIZE
+// ============================================
+renderCategories();
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>
